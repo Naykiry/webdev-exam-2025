@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<!-- Популярные книги -->
+{% if popular_books %}
+<div class="mb-5">
+  <h2>Популярные книги</h2>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for book, views in popular_books %}
+    <div class="col">
+      <div class="card h-100">
+        {% if book.cover and book.cover.filename %}
+        <img src="{{ url_for('static', filename='covers/' + book.cover.filename) }}" class="card-img-top" alt="Обложка">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ book.title }}</h5>
+          <p class="card-text">
+            <strong>Автор:</strong> {{ book.author }}<br>
+            <strong>Просмотры:</strong> {{ views }}<br>
+            <strong>Оценка:</strong> {{ book.average_rating() or 'Нет оценок' }}
+          </p>
+          <a href="{{ url_for('view_book', book_id=book.id) }}" class="btn btn-primary">Просмотр</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Недавно просмотренные книги -->
+{% if recent_books %}
+<div class="mb-5">
+  <h2>Недавно просмотренные</h2>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for book in recent_books %}
+    <div class="col">
+      <div class="card h-100">
+        {% if book.cover and book.cover.filename %}
+        <img src="{{ url_for('static', filename='covers/' + book.cover.filename) }}" class="card-img-top" alt="Обложка">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ book.title }}</h5>
+          <p class="card-text">
+            <strong>Автор:</strong> {{ book.author }}<br>
+            <strong>Оценка:</strong> {{ book.average_rating() or 'Нет оценок' }}
+          </p>
+          <a href="{{ url_for('view_book', book_id=book.id) }}" class="btn btn-primary">Просмотр</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<h2>Все книги</h2>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  {% for book in books.items %}
+  <div class="col">
+    <div class="card h-100">
+      {% if book.cover and book.cover.filename %}
+      <img src="{{ url_for('static', filename='covers/' + book.cover.filename) }}" class="card-img-top" alt="Обложка">
+      {% endif %}
+      <div class="card-body">
+        <h5 class="card-title">{{ book.title }}</h5>
+        <p class="card-text">
+          <strong>Автор:</strong> {{ book.author }}<br>
+          <strong>Год:</strong> {{ book.year }}<br>
+          <strong>Жанры:</strong> {{ book.genres | map(attribute='name') | join(', ') }}<br>
+          <strong>Оценка:</strong> {{ book.average_rating() or 'Нет оценок' }}<br>
+          <strong>Рецензий:</strong> {{ book.reviews | length }}
+        </p>
+        <div class="d-flex justify-content-between">
+          <a href="{{ url_for('view_book', book_id=book.id) }}" class="btn btn-primary">Просмотр</a>
+          {% if current_user.is_authenticated %}
+            {% if current_user.role and current_user.role.name in ['Администратор', 'Модератор'] %}
+              <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
+            {% endif %}
+            {% if current_user.role and current_user.role.name == 'Администратор' %}
+              <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" onsubmit="return confirm('Удалить книгу {{ book.title }}?')">
+                <button type="submit" class="btn btn-danger">Удалить</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Пагинация -->
+<nav aria-label="Page navigation" class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if books.has_prev %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('index', page=books.prev_num) }}">Назад</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Назад</span></li>
+    {% endif %}
+
+    {% for page_num in books.iter_pages() %}
+      {% if page_num %}
+        {% if page_num == books.page %}
+          <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+        {% else %}
+          <li class="page-item"><a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a></li>
+        {% endif %}
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if books.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('index', page=books.next_num) }}">Вперёд</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Вперёд</span></li>
+    {% endif %}
+  </ul>
+</nav>
+
+{% if current_user.is_authenticated and current_user.role and current_user.role.name == 'Администратор' %}
+  <div class="mt-4">
+    <a href="{{ url_for('add_book') }}" class="btn btn-success">Добавить книгу</a>
+  </div>
+{% endif %}
+{% endblock %}

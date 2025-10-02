@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_pagination %}
+
+{% block content %}
+<h1 class="mb-4">Журнал действий пользователей</h1>
+
+<div class="mb-3">
+  <a href="{{ url_for('export_activity_log') }}" class="btn btn-primary">Экспортировать в CSV</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Дата и время</th>
+            <th>Пользователь</th>
+            <th>Книга</th>
+            <th>IP адрес</th>
+            <th>Идентификатор сессии</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in activity_log %}
+          <tr>
+            <td>{{ log.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>{{ log.user.username if log.user else 'Гость' }}</td>
+            <td><a href="{{ url_for('view_book', book_id=log.book.id) }}">{{ log.book.title }}</a></td>
+            <td>{{ log.ip_address }}</td>
+            <td>{{ log.session_id }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{{ render_pagination(activity_log, 'activity_log') }}
+{% endblock %}

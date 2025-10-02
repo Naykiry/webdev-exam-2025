@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_pagination %}
+
+{% block content %}
+<h1 class="mb-4">Статистика просмотров</h1>
+
+<div class="mb-3">
+    <a href="{{ url_for('export_statistics') }}" class="btn btn-primary">Экспортировать в CSV</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Статистика просмотров по книгам</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Название книги</th>
+                                <th>Автор</th>
+                                <th>Всего просмотров</th>
+                                <th>За последний месяц</th>
+                                <th>За последнюю неделю</th>
+                                <th>Первый просмотр</th>
+                                <th>Последний просмотр</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stats in book_stats %}
+                            <tr>
+                                <td><a href="{{ url_for('view_book', book_id=stats.book.id) }}">{{ stats.book.title }}</a></td>
+                                <td>{{ stats.book.author }}</td>
+                                <td>{{ stats.total_views }}</td>
+                                <td>{{ stats.monthly_views }}</td>
+                                <td>{{ stats.weekly_views }}</td>
+                                <td>{{ stats.first_view.strftime('%d.%m.%Y %H:%M') if stats.first_view else '-' }}</td>
+                                <td>{{ stats.last_view.strftime('%d.%m.%Y %H:%M') if stats.last_view else '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ render_pagination(pagination, 'statistics') }}
+
+{% endblock %}

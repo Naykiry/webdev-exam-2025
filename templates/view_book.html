@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<h2>{{ book.title }}</h2>
+<p><strong>Автор:</strong> {{ book.author }}</p>
+<p><strong>Год:</strong> {{ book.year }}</p>
+<p><strong>Издательство:</strong> {{ book.publisher }}</p>
+<p><strong>Страниц:</strong> {{ book.pages }}</p>
+<p><strong>Жанры:</strong> {{ book.genres | map(attribute='name') | join(', ') }}</p>
+<div><strong>Описание:</strong> {{ book.description | safe }}</div>
+
+{% if current_user.is_authenticated and (current_user.role.name == 'Администратор' or current_user.role.name == 'Модератор') %}
+  <a href="{{ url_for('edit_book', book_id=book.id) }}" class="btn btn-warning">Редактировать</a>
+{% endif %}
+
+{% if current_user.is_authenticated and current_user.role.name == 'Администратор' %}
+  <form method="POST" action="{{ url_for('delete_book', book_id=book.id) }}" class="mt-2">
+    <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить эту книгу?')">Удалить</button>
+  </form>
+{% endif %}
+
+
+
+<hr>
+<h4>Рецензии</h4>
+{% if reviews %}
+  {% for review in reviews %}
+    <div class="border p-2 mb-3">
+      <strong>{{ review.user.username }}</strong> ({{ review.timestamp.strftime('%Y-%m-%d %H:%M') }}) — Оценка: {{ review.rating }}
+      <p>{{ review.text|safe }}</p>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>Пока нет рецензий.</p>
+{% endif %}
+
+{% if current_user.is_authenticated and not user_review %}
+<h3 class="mt-5">Оставить рецензию</h3>
+<form id="review-form" method="POST" action="{{ url_for('add_review', book_id=book.id) }}">
+  {{ review_form.hidden_tag() }}
+
+  <div class="mb-3">
+    {{ review_form.rating.label(class="form-label") }}
+    {{ review_form.rating(class="form-control") }}
+  </div>
+
+  <div class="mb-3">
+    {{ review_form.text.label(class="form-label") }}
+    {{ review_form.text(class="form-control", rows=5, id="markdown-review") }}
+  </div>
+
+  <div class="mb-3">
+    {{ review_form.submit(class="btn btn-primary") }}
+  </div>
+</form>
+{% elif user_review %}
+  <h3 class="mt-5">Ваша рецензия</h3>
+  <div class="border p-2 mb-3">
+    <strong>{{ user_review.user.username }}</strong> ({{ user_review.timestamp.strftime('%Y-%m-%d %H:%M') }}) — Оценка: {{ user_review.rating }}
+    <p>{{ user_review.text|safe }}</p>
+  </div>
+{%endif %}
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("✅ DOM загружен");
+
+    const textarea = document.getElementById("markdown-review");
+    const form = document.getElementById("review-form");
+
+    console.log("📋 textarea:", textarea);
+    console.log("🧾 form:", form);
+
+    if (textarea && form) {
+      form.addEventListener("submit", function () {
+        console.log("🚀 Форма отправляется");
+      });
+    } else {
+      console.warn("❌ textarea или form не найдены");
+    }
+  });
+</script>
+{% endblock %}

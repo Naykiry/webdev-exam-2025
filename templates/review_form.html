@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Новая рецензия{% endblock %}
+
+{% block content %}
+<h2>Рецензия на "{{ book.title }}"</h2>
+
+<form method="POST" id="review-form">
+  {{ form.hidden_tag() }}
+
+  <div class="mb-3">
+    {{ form.rating.label(class="form-label") }}
+    {{ form.rating(class="form-select") }}
+    {% for error in form.rating.errors %}
+      <div class="text-danger">{{ error }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="mb-3">
+    {{ form.text.label(class="form-label") }}
+    {{ form.text(class="form-control", id="markdown-review", rows=5) }}
+    {% for error in form.text.errors %}
+      <div class="text-danger">{{ error }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="mb-3">
+    {{ form.submit(class="btn btn-primary") }}
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<!-- EasyMDE подключение -->
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const easyMDE = new EasyMDE({
+      element: document.getElementById('markdown-review'),
+      toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "preview", "guide"],
+      spellChecker: false
+    });
+
+    document.getElementById('review-form').addEventListener('submit', function () {
+      document.getElementById('markdown-review').value = easyMDE.value();
+    });
+  });
+</script>
+{% endblock %}
